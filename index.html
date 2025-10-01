@@ -1,54 +1,110 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Game Hub</title>
-  <link rel="stylesheet" href="style.css">
+  <title>GameHub - Gamer Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --bg: #050010;
+      --card: #0d0125;
+      --text: #ffffff;
+      --neon: #00ffea;
+      --hover: #ff00f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: radial-gradient(circle at top, #100030, #050010);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 30px;
+      font-size: 22px;
+      text-shadow: 0 0 10px var(--neon);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      padding: 40px;
+      width: 90%;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 2px solid var(--neon);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      text-decoration: none;
+      color: var(--text);
+      transition: 0.3s;
+      box-shadow: 0 0 15px var(--neon);
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 0 25px var(--hover);
+      border-color: var(--hover);
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .title {
+      font-size: 16px;
+      margin: 15px 0 5px;
+    }
+
+    .meta {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    footer {
+      margin-top: auto;
+      text-align: center;
+      padding: 20px;
+      font-size: 10px;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-  <div id="menu" class="card menu">
-    <h1>🎮 Game Hub</h1>
-    <div class="games-list">
-      <div class="game-card" onclick="loadGame('snake')">
-        <img src="img/snake.svg" alt="Snake" class="icon">
-        <span>Snake</span>
-      </div>
-      <div class="game-card" onclick="loadGame('pong')">
-        <img src="img/pong.svg" alt="Pong" class="icon">
-        <span>Pong</span>
-      </div>
-      <div class="game-card" onclick="loadGame('tetris')">
-        <img src="img/tetris.svg" alt="Tetris" class="icon">
-        <span>Tetris</span>
-      </div>
-      <div class="game-card" onclick="loadGame('minecraft')">
-        <img src="img/minecraft.svg" alt="Minecraft" class="icon">
-        <span>Minecraft</span>
-      </div>
-      <div class="game-card" onclick="loadGame('clash')">
-        <img src="img/clash.svg" alt="Clash" class="icon">
-        <span>Clash</span>
-      </div>
-    </div>
-  </div>
-  <div id="game-container"></div>
-  <script>
-    function loadGame(game) {
-      document.getElementById('menu').style.display = 'none';
-      document.getElementById('game-container').innerHTML = '<div class="card" id="loading">Loading...</div>';
-      fetch(`games/${game}.html`)
-        .then(r => r.text())
-        .then(html => {
-          document.getElementById('game-container').innerHTML = html;
-        });
-    }
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        document.getElementById('game-container').innerHTML = '';
-        document.getElementById('menu').style.display = '';
-      }
-    });
-  </script>
+  <header>🎮 GAMEHUB 2.0 🎮</header>
+
+  <main class="grid">
+    <a class="card" href="games/chess/index.html">
+      <img src="https://cdn-icons-png.flaticon.com/512/480/480744.png" alt="Chess" />
+      <div class="title">♟️ Online Chess</div>
+      <div class="meta">Create a room and play with friends</div>
+    </a>
+
+    <a class="card" href="games/snake/index.html">
+      <img src="https://cdn-icons-png.flaticon.com/512/4273/4273684.png" alt="Snake" />
+      <div class="title">🐍 Snake Classic</div>
+      <div class="meta">Eat apples and grow the snake</div>
+    </a>
+  </main>
+
+  <footer>© 2025 GameHub | Made with ❤️ by You</footer>
 </body>
 </html>

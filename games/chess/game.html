@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chess – Online Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;background:#0f1226;color:#fff;display:flex;gap:24px;justify-content:center;align-items:flex-start;padding:24px;margin:0}
+    #board{width:420px}
+    .panel{max-width:360px}
+    button{padding:8px 12px;border-radius:8px;border:1px solid #2a2f57;background:#171a35;color:#fff;cursor:pointer}
+    button:hover{filter:brightness(1.1)}
+    .bad{color:#ff9e9e}
+    a{color:#9ab3ff}
+    pre{background:#111;color:#9ad;padding:8px;border-radius:8px;overflow:auto}
+  </style>
+</head>
+<body>
+  <div id="board"></div>
+  <div class="panel">
+    <h2 id="role">You: …</h2>
+    <div>Room: <code id="rid"></code></div>
+    <div>Turn: <span id="turn">-</span></div>
+    <div>Status: <span id="status">connecting...</span></div>
+    <div class="row" style="margin:8px 0">
+      <button id="reset">Reset</button>
+      <button id="copy">Copy room link</button>
+    </div>
+    <div class="row bad" id="msg"></div>
+    <div class="row"><a href="./">← Back</a></div>
+    <div class="row">
+      <details>
+        <summary>Debug</summary>
+        <div>FEN:</div>
+        <pre id="fen"></pre>
+      </details>
+    </div>
+  </div>
+
+  <!-- libs -->
+  <script src="https://unpkg.com/chess.js@1.0.0/dist/chess.min.js"></script>
+  <script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+
+  <!-- Firebase compat (CDN sencillo) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script>
+    // 1) Firebase config: pega aquí tu configuración real desde la consola de Firebase
+    const firebaseConfig = {
+      https://gamehub-cff5c-default-rtdb.firebaseio.com/
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      databaseURL: "https://TU-PROYECTO.firebaseio.com",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID"
+      */
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2) Helpers UI
+    const $ = id => document.getElementById(id);
+    const setText = (id,v) => $(id).textContent = v;
+    const setMsg = m => setText('msg', m||'');
+
+    // 3) Room
+    const params = new URLSearchParams(location.search);
+    const roomId = params.get('g') || 'default';
+    setText('rid', roomId);
+
+    // 4) Estado local
+    const game = new Chess();
+    let myRole = null; // 'white' | 'black' | null (spectator)
+    const roomRef = db.ref('rooms/' + roomId);
+
+    // 5) Tablero
+    const board = Chessboard('board', {
+      position: game.fen(),
+      draggable: true,
+      orientation: 'white',
+      onDragStart: (source, piece) => {
+        if (game.game_over()) return false;
+        if (!myRole) return false;
+        const myColor = myRole[0]; // 'w' or 'b'
+        const turn = game.turn();
+        if (turn !== myColor) return false;
+        if ((turn === 'w' && piece.startsWith('b')) || (turn === 'b' && piece.startsWith('w'))) return false;
+      },
+      onDrop: (source, target) => {
+        const move = game.move({ from: source, to: target, promotion: 'q' });
+        if (!move) return 'snapback';
+        publishState();
+      },
+      onSnapEnd: () => board.position(game.fen(), true)
+    });
+
+    // 6) Join/crear sala y rol
+    async function joinRoom(){
+      const snap = await roomRef.get();
+      if (!snap.exists()) {
+        myRole = 'white';
+        await roomRef.set({
+          players: { white: true, black: null },
+          fen: game.fen(),
+          turn: game.turn(),
+          updatedAt: Date.now()
+        });
+      } else {
+        const data = snap.val() || {};
+        if (data.players?.white && !data.players?.black) {
+          myRole = 'black';
+          await roomRef.child('players/black').set(true);
+          board.orientation('black');
+        } else if (!data.players?.white) {
+          myRole = 'white';
+          await roomRef.child('players/white').set(true);
+        } else {
+          myRole = null; // spectator
+        }
+        if (data.fen) game.load(data.fen);
+        board.position(game.fen(), true);
+      }
+      updateUI();
+      subscribe();
+    }
+
+    // 7) Suscripción en tiempo real
+    function subscribe(){
+      roomRef.on('value', (snap) => {
+        const v = snap.val(); if (!v) return;
+        if (v.fen && v.fen !== game.fen()) {
+          game.load(v.fen);
+          board.position(v.fen, true);
+        }
+        if (v.turn) setText('turn', v.turn === 'w' ? 'white' : 'black');
+        updateStatus();
+      });
+    }
+
+    // 8) Publicar estado (tras mover)
+    let writeBusy = false;
+    async function publishState(){
+      if (writeBusy) return;
+      writeBusy = true;
+      try {
+        await roomRef.update({
+          fen: game.fen(),
+          turn: game.turn(),
+          updatedAt: Date.now()
+        });
+        updateUI();
+      } finally {
+        writeBusy = false;
+      }
+    }
+
+    // 9) UI
+    function updateStatus(){
+      let status = '';
+      if (game.in_checkmate()) status = 'checkmate';
+      else if (game.in_draw()) status = 'draw';
+      else if (game.in_check()) status = 'check';
+      else status = 'playing';
+      setText('status', status);
+      setText('fen', game.fen());
+    }
+    function updateUI(){
+      setText('role', 'You: ' + (myRole || 'spectator'));
+      setText('turn', game.turn() === 'w' ? 'white' : 'black');
+      updateStatus();
+    }
+
+    // 10) Reset
+    $('reset').onclick = async () => {
+      game.reset();
+      board.start();
+      await publishState();
+      setMsg('');
+    };
+
+    // 11) Copiar link
+    $('copy').onclick = async () => {
+      const base = location.origin + location.pathname.replace('game.html','');
+      const url = base + 'game.html?g=' + encodeURIComponent(roomId);
+      try { await navigator.clipboard.writeText(url); setMsg('Link copied'); }
+      catch { setMsg('Copy failed'); }
+      setTimeout(()=>setMsg(''), 2000);
+    };
+
+    // 12) Init
+    joinRoom();
+    window.addEventListener('resize', board.resize);
+  </script>
+</body>
+</html>

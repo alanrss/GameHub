@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chess - Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background: #050010;
+      color: #fff;
+      font-family: 'Press Start 2P', cursive;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    input, button {
+      font-family: inherit;
+      padding: 12px;
+      margin: 10px;
+      border: 2px solid #00ffea;
+      background: transparent;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #00ffea;
+      color: #050010;
+      cursor: pointer;
+    }
+    a { color: #00ffea; }
+  </style>
+</head>
+<body>
+  <h1>♟️ Create or Join a Room</h1>
+  <input id="room" placeholder="Enter room ID" />
+  <button onclick="join()">Join Room</button>
+  <button onclick="create()">Create New Room</button>
+  <p><a href="../../index.html">← Back to GameHub</a></p>
+
+  <script>
+    function join() {
+      const id = document.getElementById('room').value.trim();
+      if (id) location.href = `game.html?g=${encodeURIComponent(id)}`;
+    }
+    function create() {
+      const id = Math.random().toString(36).substring(2, 8);
+      location.href = `game.html?g=${id}`;
+    }
+  </script>
+</body>
+</html>
