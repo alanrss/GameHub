@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Hub</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="menu" class="card menu">
+    <h1>🎮 Game Hub</h1>
+    <div class="games-list">
+      <div class="game-card" onclick="loadGame('snake')">
+        <img src="img/snake.svg" alt="Snake" class="icon">
+        <span>Snake</span>
+      </div>
+      <div class="game-card" onclick="loadGame('pong')">
+        <img src="img/pong.svg" alt="Pong" class="icon">
+        <span>Pong</span>
+      </div>
+      <div class="game-card" onclick="loadGame('tetris')">
+        <img src="img/tetris.svg" alt="Tetris" class="icon">
+        <span>Tetris</span>
+      </div>
+      <div class="game-card" onclick="loadGame('minecraft')">
+        <img src="img/minecraft.svg" alt="Minecraft" class="icon">
+        <span>Minecraft</span>
+      </div>
+      <div class="game-card" onclick="loadGame('clash')">
+        <img src="img/clash.svg" alt="Clash" class="icon">
+        <span>Clash</span>
+      </div>
+    </div>
+  </div>
+  <div id="game-container"></div>
+  <script>
+    function loadGame(game) {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('game-container').innerHTML = '<div class="card" id="loading">Loading...</div>';
+      fetch(`games/${game}.html`)
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('game-container').innerHTML = html;
+        });
+    }
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        document.getElementById('game-container').innerHTML = '';
+        document.getElementById('menu').style.display = '';
+      }
+    });
+  </script>
+</body>
+</html>

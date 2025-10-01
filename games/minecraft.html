@@ -1,0 +1,47 @@
+<div class="card">
+  <button class="back-btn" onclick="backMenu()">←</button>
+  <canvas id="mc" width="420" height="320"></canvas>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+    <span id="mc-block" style="font-size:1.2em;">🟫</span>
+    <button id="mc-grass">🟩</button>
+    <button id="mc-dirt">🟫</button>
+    <button id="mc-erase">⛔</button>
+  </div>
+</div>
+<script>
+function backMenu() {
+  document.getElementById('game-container').innerHTML = '';
+  document.getElementById('menu').style.display = '';
+}
+const c=document.getElementById('mc'),ctx=c.getContext('2d');
+const COLS=21,ROWS=16,CELL=20;
+let world=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+let selected='dirt', player={x:10,y:8};
+function draw(){
+  ctx.fillStyle='#191e29';ctx.fillRect(0,0,c.width,c.height);
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+    if(world[y][x]==='grass'){ctx.fillStyle='#8fd14f';ctx.fillRect(x*CELL,y*CELL,CELL,CELL);}
+    if(world[y][x]==='dirt'){ctx.fillStyle='#b99861';ctx.fillRect(x*CELL,y*CELL,CELL,CELL);}
+  }
+  // Player
+  ctx.fillStyle='#48b9e9';ctx.fillRect(player.x*CELL,player.y*CELL,CELL,CELL);
+}
+c.addEventListener('click',e=>{
+  const rect=c.getBoundingClientRect();
+  const x=Math.floor((e.clientX-rect.left)/CELL),y=Math.floor((e.clientY-rect.top)/CELL);
+  if(selected==='erase'){world[y][x]='';} else{world[y][x]=selected;}
+  draw();
+});
+document.getElementById('mc-grass').onclick=()=>{selected='grass';document.getElementById('mc-block').textContent='🟩';};
+document.getElementById('mc-dirt').onclick=()=>{selected='dirt';document.getElementById('mc-block').textContent='🟫';};
+document.getElementById('mc-erase').onclick=()=>{selected='erase';document.getElementById('mc-block').textContent='⛔';};
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')player.x=Math.max(0,player.x-1);
+  if(e.key==='ArrowRight')player.x=Math.min(COLS-1,player.x+1);
+  if(e.key==='ArrowUp')player.y=Math.max(0,player.y-1);
+  if(e.key==='ArrowDown')player.y=Math.min(ROWS-1,player.y+1);
+  if(e.key==='Escape')backMenu();
+  draw();
+});
+draw();
+</script>

@@ -1,0 +1,55 @@
+<div class="card">
+  <button class="back-btn" onclick="backMenu()">←</button>
+  <canvas id="clash" width="420" height="260"></canvas>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+    <button id="clash-soldier">🟦</button>
+    <button id="clash-enemy">🟥</button>
+    <span id="clash-score">0 : 0</span>
+  </div>
+</div>
+<script>
+function backMenu() {
+  document.getElementById('game-container').innerHTML = '';
+  document.getElementById('menu').style.display = '';
+}
+const c=document.getElementById('clash'),ctx=c.getContext('2d');
+let myUnits=[],enemyUnits=[],score=[0,0],running=true;
+function reset(){
+  myUnits=[];enemyUnits=[];score=[0,0];draw();
+}
+function spawnUnit(x,y,dir,color){
+  return {x,y,dir,color};
+}
+document.getElementById('clash-soldier').onclick=()=>{myUnits.push(spawnUnit(30,220,-1,'#48b9e9'));};
+document.getElementById('clash-enemy').onclick=()=>{enemyUnits.push(spawnUnit(390,40,1,'#e94e77'));};
+function step(){
+  if(!running)return;
+  myUnits.forEach(u=>u.y+=u.dir*2);
+  enemyUnits.forEach(u=>u.y+=u.dir*2);
+  // collision
+  myUnits.forEach((m,i)=>{
+    enemyUnits.forEach((e,j)=>{
+      if(Math.abs(m.x-e.x)<30&&Math.abs(m.y-e.y)<30){
+        myUnits.splice(i,1);enemyUnits.splice(j,1);
+        score[0]++;document.getElementById('clash-score').textContent=`${score[0]} : ${score[1]}`;
+      }
+    });
+  });
+  // score for enemy reaching base
+  enemyUnits.forEach((e,i)=>{if(e.y>240){score[1]++;enemyUnits.splice(i,1);}});
+  document.getElementById('clash-score').textContent=`${score[0]} : ${score[1]}`;
+  draw();
+}
+function draw(){
+  ctx.fillStyle='#191e29';ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#48b9e9';ctx.fillRect(10,220,40,30); // base
+  ctx.fillStyle='#e94e77';ctx.fillRect(370,10,40,30); // base enemy
+  myUnits.forEach(u=>{ctx.fillStyle=u.color;ctx.fillRect(u.x,u.y,20,20);});
+  enemyUnits.forEach(u=>{ctx.fillStyle=u.color;ctx.fillRect(u.x,u.y,20,20);});
+}
+setInterval(step,40);
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape')backMenu();
+});
+reset();
+</script>

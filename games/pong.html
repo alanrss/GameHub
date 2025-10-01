@@ -1,0 +1,67 @@
+<div class="card">
+  <button class="back-btn" onclick="backMenu()">←</button>
+  <canvas id="pong" width="420" height="260"></canvas>
+  <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+    <button id="pong-start">▶</button>
+    <button id="pong-restart">⟲</button>
+    <span id="pong-score">0 : 0</span>
+  </div>
+</div>
+<script>
+  function backMenu() {
+    document.getElementById('game-container').innerHTML = '';
+    document.getElementById('menu').style.display = '';
+  }
+  const c = document.getElementById('pong');
+  const ctx = c.getContext('2d');
+  let running = false, scoreA=0, scoreB=0, tickId, ball, paddles;
+  function reset() {
+    ball = {x: c.width/2, y: c.height/2, vx:4, vy:3};
+    paddles = [
+      {y: c.height/2-30}, // left
+      {y: c.height/2-30}  // right
+    ];
+    running = false;
+    scoreA = 0; scoreB = 0;
+    document.getElementById('pong-score').textContent = `${scoreA} : ${scoreB}`;
+    draw();
+  }
+  function step() {
+    if (!running) return;
+    ball.x += ball.vx; ball.y += ball.vy;
+    // top/bottom
+    if (ball.y<0 || ball.y>c.height-10) ball.vy*=-1;
+    // left paddle
+    if (ball.x<18 && ball.y>paddles[0].y && ball.y<paddles[0].y+60) ball.vx*=-1;
+    // right paddle
+    if (ball.x>c.width-28 && ball.y>paddles[1].y && ball.y<paddles[1].y+60) ball.vx*=-1;
+    // score
+    if (ball.x<0) { scoreB++; document.getElementById('pong-score').textContent = `${scoreA} : ${scoreB}`; resetBall(); }
+    if (ball.x>c.width) { scoreA++; document.getElementById('pong-score').textContent = `${scoreA} : ${scoreB}`; resetBall(); }
+    // simple AI (right paddle)
+    paddles[1].y += ball.y>paddles[1].y+30 ? 4 : -4;
+    paddles[1].y = Math.max(0,Math.min(c.height-60,paddles[1].y));
+    draw();
+  }
+  function resetBall() {
+    ball.x = c.width/2; ball.y = c.height/2;
+    ball.vx = (Math.random()>0.5?4:-4); ball.vy = (Math.random()>0.5?3:-3);
+  }
+  function draw() {
+    ctx.fillStyle = '#191e29'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#48b9e9'; ctx.fillRect(8,paddles[0].y,10,60);
+    ctx.fillStyle = '#e94e77'; ctx.fillRect(c.width-18,paddles[1].y,10,60);
+    ctx.fillStyle = '#f7e94e'; ctx.beginPath(); ctx.arc(ball.x,ball.y,9,0,2*Math.PI); ctx.fill();
+  }
+  document.getElementById('pong-start').onclick = ()=>{ if (!running) {running=true; tickId=setInterval(step,20);} };
+  document.getElementById('pong-restart').onclick = ()=>{ reset(); running=true; tickId=setInterval(step,20); };
+  c.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    paddles[0].y = Math.max(0, Math.min(c.height-60, e.clientY-rect.top-30));
+    draw();
+  });
+  window.addEventListener('keydown', e=>{
+    if (e.key==='Escape') backMenu();
+  });
+  reset();
+</script>
