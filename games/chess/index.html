@@ -5,6 +5,8 @@
   <title>Chess - Room</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
     body {
       background: #050010;
       color: #fff;
@@ -15,39 +17,95 @@
       justify-content: center;
       min-height: 100vh;
       flex-direction: column;
+      padding: 20px;
     }
-    input, button {
+
+    h1 {
+      color: #00ffea;
+      text-shadow: 0 0 10px #00ffea;
+      margin-bottom: 40px;
+      font-size: 20px;
+    }
+
+    input {
       font-family: inherit;
       padding: 12px;
-      margin: 10px;
+      margin: 10px 0;
       border: 2px solid #00ffea;
       background: transparent;
       color: #fff;
       border-radius: 8px;
       font-size: 14px;
+      text-align: center;
+      width: 220px;
+      outline: none;
     }
+
+    input::placeholder {
+      color: #aaa;
+    }
+
+    button {
+      font-family: inherit;
+      padding: 12px;
+      margin: 10px;
+      width: 220px;
+      border: 2px solid #00ffea;
+      background: transparent;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: background 0.2s, color 0.2s;
+    }
+
     button:hover {
       background: #00ffea;
       color: #050010;
       cursor: pointer;
     }
-    a { color: #00ffea; }
+
+    a {
+      color: #00ffea;
+      text-decoration: none;
+      margin-top: 20px;
+      display: inline-block;
+    }
+
+    .info {
+      font-size: 12px;
+      margin-top: 15px;
+      opacity: 0.7;
+    }
   </style>
 </head>
 <body>
-  <h1>♟️ Create or Join a Room</h1>
-  <input id="room" placeholder="Enter room ID" />
+  <h1>♟️ ONLINE CHESS</h1>
+
+  <!-- Código para unirse -->
+  <input id="room" placeholder="Enter 5-letter code" maxlength="5" />
   <button onclick="join()">Join Room</button>
+
+  <!-- Crear nueva sala -->
   <button onclick="create()">Create New Room</button>
-  <p><a href="../../index.html">← Back to GameHub</a></p>
+
+  <div class="info">Share the code with your friend to join the same room.</div>
+
+  <a href="../../index.html">← Back to GameHub</a>
 
   <script>
+    // 🔑 Unirse con código corto
     function join() {
-      const id = document.getElementById('room').value.trim();
-      if (id) location.href = `game.html?g=${encodeURIComponent(id)}`;
+      let id = document.getElementById('room').value.trim().toLowerCase();
+      if (id.length === 0) {
+        alert("⚠️ Please enter a room code.");
+        return;
+      }
+      location.href = `game.html?g=${encodeURIComponent(id)}`;
     }
+
+    // 🧠 Crear nueva sala con código automático
     function create() {
-      const id = Math.random().toString(36).substring(2, 8);
+      const id = Math.random().toString(36).substring(2, 7).toLowerCase();
       location.href = `game.html?g=${id}`;
     }
   </script>
