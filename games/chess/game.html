@@ -6,100 +6,181 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
   <style>
-    body{font-family:system-ui,Arial,sans-serif;background:#0f1226;color:#fff;display:flex;gap:24px;justify-content:center;align-items:flex-start;padding:24px;margin:0}
-    #board{width:420px}
-    .panel{max-width:360px}
-    button{padding:8px 12px;border-radius:8px;border:1px solid #2a2f57;background:#171a35;color:#fff;cursor:pointer}
-    button:hover{filter:brightness(1.1)}
-    .bad{color:#ff9e9e}
-    a{color:#9ab3ff}
-    pre{background:#111;color:#9ad;padding:8px;border-radius:8px;overflow:auto}
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --bg: #050010;
+      --panel: #0d0125;
+      --neon: #00ffea;
+      --hover: #ff00f2;
+      --text: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', cursive;
+      background: radial-gradient(circle at top, #100030, #050010);
+      color: var(--text);
+      display: flex;
+      flex-direction: row;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    #board {
+      width: 420px;
+      border: 4px solid var(--neon);
+      border-radius: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 2px solid var(--neon);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 320px;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+      color: var(--neon);
+    }
+
+    .panel button {
+      font-family: inherit;
+      padding: 10px;
+      margin: 8px 0;
+      width: 100%;
+      border: 2px solid var(--neon);
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .panel button:hover {
+      background: var(--neon);
+      color: var(--bg);
+      cursor: pointer;
+    }
+
+    .panel a {
+      color: var(--neon);
+      text-decoration: none;
+    }
+
+    .bad {
+      color: #ff9e9e;
+      word-wrap: break-word;
+    }
+
+    pre {
+      background: #111;
+      color: #9ad;
+      padding: 8px;
+      border-radius: 6px;
+      overflow-wrap: break-word;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+      }
+      #board {
+        width: 90%;
+        max-width: 360px;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="board"></div>
+
   <div class="panel">
     <h2 id="role">You: …</h2>
     <div>Room: <code id="rid"></code></div>
     <div>Turn: <span id="turn">-</span></div>
     <div>Status: <span id="status">connecting...</span></div>
-    <div class="row" style="margin:8px 0">
+    <div style="margin:8px 0">
       <button id="reset">Reset</button>
-      <button id="copy">Copy room link</button>
+      <button id="copy">Copy code</button>
     </div>
-    <div class="row bad" id="msg"></div>
-    <div class="row"><a href="./">← Back</a></div>
-    <div class="row">
-      <details>
-        <summary>Debug</summary>
-        <div>FEN:</div>
-        <pre id="fen"></pre>
-      </details>
+    <div class="bad" id="msg"></div>
+    <div style="margin-top:12px">
+      <a href="./">← Back to Room</a>
     </div>
+    <details style="margin-top:16px">
+      <summary>Debug</summary>
+      <div>FEN:</div>
+      <pre id="fen"></pre>
+    </details>
   </div>
 
   <!-- libs -->
   <script src="https://unpkg.com/chess.js@1.0.0/dist/chess.min.js"></script>
   <script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
-  <!-- Firebase compat (CDN sencillo) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <script>
-    // 1) Firebase config: pega aquí tu configuración real desde la consola de Firebase
+    // ✅ Firebase Config
     const firebaseConfig = {
-      https://gamehub-cff5c-default-rtdb.firebaseio.com/
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_AUTH_DOMAIN",
-      databaseURL: "https://TU-PROYECTO.firebaseio.com",
-      projectId: "TU_PROJECT_ID",
-      storageBucket: "TU_BUCKET",
-      messagingSenderId: "TU_SENDER_ID",
-      appId: "TU_APP_ID"
-      */
+      apiKey: "AIzaSyCzxY-72w17gULJHFAGb1dw1bjqNQhyJf8",
+      authDomain: "gamehub-cff5c.firebaseapp.com",
+      databaseURL: "https://gamehub-cff5c-default-rtdb.firebaseio.com",
+      projectId: "gamehub-cff5c",
+      storageBucket: "gamehub-cff5c.firebasestorage.app",
+      messagingSenderId: "263144183071",
+      appId: "1:263144183071:web:fae46eae43470f252d4c2a",
+      measurementId: "G-L7SY3LWLVR"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2) Helpers UI
     const $ = id => document.getElementById(id);
-    const setText = (id,v) => $(id).textContent = v;
-    const setMsg = m => setText('msg', m||'');
+    const setText = (id, v) => $(id).textContent = v;
+    const setMsg = m => setText('msg', m || '');
 
-    // 3) Room
+    // 🧠 Genera código corto en minúsculas si no hay uno en la URL
     const params = new URLSearchParams(location.search);
-    const roomId = params.get('g') || 'default';
+    let roomId = params.get('g');
+
+    if (!roomId) {
+      roomId = Math.random().toString(36).substring(2, 7);
+      window.location.search = '?g=' + roomId;
+    }
+
     setText('rid', roomId);
 
-    // 4) Estado local
     const game = new Chess();
-    let myRole = null; // 'white' | 'black' | null (spectator)
+    let myRole = null;
     const roomRef = db.ref('rooms/' + roomId);
 
-    // 5) Tablero
     const board = Chessboard('board', {
       position: game.fen(),
       draggable: true,
       orientation: 'white',
-      onDragStart: (source, piece) => {
+      onDragStart: (src, piece) => {
         if (game.game_over()) return false;
         if (!myRole) return false;
-        const myColor = myRole[0]; // 'w' or 'b'
-        const turn = game.turn();
-        if (turn !== myColor) return false;
-        if ((turn === 'w' && piece.startsWith('b')) || (turn === 'b' && piece.startsWith('w'))) return false;
+        const myColor = myRole[0];
+        if (game.turn() !== myColor) return false;
+        if ((myColor === 'w' && piece.startsWith('b')) || (myColor === 'b' && piece.startsWith('w'))) return false;
       },
-      onDrop: (source, target) => {
-        const move = game.move({ from: source, to: target, promotion: 'q' });
+      onDrop: (src, tgt) => {
+        const move = game.move({ from: src, to: tgt, promotion: 'q' });
         if (!move) return 'snapback';
         publishState();
       },
       onSnapEnd: () => board.position(game.fen(), true)
     });
 
-    // 6) Join/crear sala y rol
-    async function joinRoom(){
+    async function joinRoom() {
       const snap = await roomRef.get();
       if (!snap.exists()) {
         myRole = 'white';
@@ -125,13 +206,13 @@
         board.position(game.fen(), true);
       }
       updateUI();
-      subscribe();
+      subscribeRoom();
     }
 
-    // 7) Suscripción en tiempo real
-    function subscribe(){
+    function subscribeRoom() {
       roomRef.on('value', (snap) => {
-        const v = snap.val(); if (!v) return;
+        const v = snap.val();
+        if (!v) return;
         if (v.fen && v.fen !== game.fen()) {
           game.load(v.fen);
           board.position(v.fen, true);
@@ -141,9 +222,8 @@
       });
     }
 
-    // 8) Publicar estado (tras mover)
     let writeBusy = false;
-    async function publishState(){
+    async function publishState() {
       if (writeBusy) return;
       writeBusy = true;
       try {
@@ -158,8 +238,7 @@
       }
     }
 
-    // 9) UI
-    function updateStatus(){
+    function updateStatus() {
       let status = '';
       if (game.in_checkmate()) status = 'checkmate';
       else if (game.in_draw()) status = 'draw';
@@ -168,13 +247,13 @@
       setText('status', status);
       setText('fen', game.fen());
     }
-    function updateUI(){
+
+    function updateUI() {
       setText('role', 'You: ' + (myRole || 'spectator'));
       setText('turn', game.turn() === 'w' ? 'white' : 'black');
       updateStatus();
     }
 
-    // 10) Reset
     $('reset').onclick = async () => {
       game.reset();
       board.start();
@@ -182,16 +261,17 @@
       setMsg('');
     };
 
-    // 11) Copiar link
+    // 📋 Copia solo el código
     $('copy').onclick = async () => {
-      const base = location.origin + location.pathname.replace('game.html','');
-      const url = base + 'game.html?g=' + encodeURIComponent(roomId);
-      try { await navigator.clipboard.writeText(url); setMsg('Link copied'); }
-      catch { setMsg('Copy failed'); }
-      setTimeout(()=>setMsg(''), 2000);
+      try {
+        await navigator.clipboard.writeText(roomId);
+        setMsg('Code copied: ' + roomId);
+      } catch {
+        setMsg('Copy failed');
+      }
+      setTimeout(() => setMsg(''), 2000);
     };
 
-    // 12) Init
     joinRoom();
     window.addEventListener('resize', board.resize);
   </script>
